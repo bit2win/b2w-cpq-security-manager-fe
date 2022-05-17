@@ -1,0 +1,203 @@
+# cloud-build-local --config=cb-build-image.yaml --substitutions=BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD),REPO_NAME=$(basename "$(pwd)"),COMMIT_SHA=$(git rev-parse HEAD) --dryrun=false --push .
+# cloud-build-local --config=cb-build-image.yaml --substitutions=BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD),REPO_NAME=b2w-cpq-import-export-model-fe,COMMIT_SHA=$(git rev-parse HEAD) --dryrun=false --push .
+
+steps:
+  - name: 'eu.gcr.io/b2w-master/b2w-ubuntu:dev'
+    entrypoint: /bin/bash
+    args:
+      - '-c'
+      - |
+        declare -A ALIASES
+
+        ALIASES["b2w-cpq-catalog-fe"]="@bit2win/catalog"
+        ALIASES["b2w-cpq-family-manager-fe"]="@bit2win/family-manager"
+        ALIASES["b2w-cpq-price-manager-fe"]="@bit2win/price-manager"
+        ALIASES["b2w-cpq-product-manager-fe"]="@bit2win/product-manager"
+        ALIASES["b2w-cpq-rulecomposer-fe"]="@bit2win/rulecomposer"
+        ALIASES["b2w-cpq-connector-fe"]="@bit2win/connector"
+        ALIASES["b2w-cpq-om-administration-fe"]="@bit2win/order-management"
+        ALIASES["b2w-cpq-om-businessprocess-fe"]="@bit2win/business-process"
+        ALIASES["b2w-cpq-translation-manager-fe"]="@bit2win/translation-manager"
+        ALIASES["b2w-cpq-bundle-manager-fe"]="@bit2win/b2w-cpq-bundle-manager"
+
+        echo export ALIAS=${ALIASES[$REPO_NAME]} > /workspace/variables
+        declare -A _CDN=([internal-dev]="cdn-int-dev.bit2win.cloud" [internal-test]="cdn-int-test.bit2win.cloud" [internal-prod]="cdn-int-prod.bit2win.cloud" [preview-hotfix]="cdn-preview-hotfix.bit2win.cloud" [hotfix]="cdn-hotfix.bit2win.cloud" [costomer-prod]="cdn.bit2win.cloud")
+        export CDN="https://$${_CDN[$BRANCH_NAME]}"
+
+        curl $$CDN/VERSION -o VERSION
+        echo "*** VERSION ***"
+        cat VERSION
+
+        curl $$CDN/modules.ver -o modules.ver
+        echo "*** MODULES ***"
+        cat modules.ver
+
+        declare -A _TAG=([internal-dev]="dev" [internal-test]="test" [internal-prod]="RC" [preview-hotfix]="int-hf" [hotfix]="prod-hf" [customer-prod]="R")
+        declare -A _ENV=([internal-dev]="dev" [internal-test]="test" [internal-prod]="pre-prod" [preview-hotfix]="int-hf" [hotfix]="prod-hf" [customer-prod]="prod")
+        declare -A _NPM=([internal-dev]="prod" [internal-test]="prod" [internal-prod]="prod" [preview-hotfix]="prod" [hotfix]="prod" [customer-prod]="prod")
+
+        echo export TOPIC="$BRANCH_NAME-deploy-fe" >> /workspace/variables
+        echo export BUCKET="b2w-cdn-$BRANCH_NAME" >> /workspace/variables
+
+        export BRANCH=$BRANCH_NAME 
+        echo export BRANCH=$$BRANCH >> /workspace/variables
+              
+        export TAG=$${_TAG[$BRANCH_NAME]}
+        echo export TAG=$$TAG >> /workspace/variables
+
+        export NPM_BUILD_TAG=$${_NPM[$BRANCH_NAME]}
+        echo export NPM_BUILD_TAG=$$NPM_BUILD_TAG >> /workspace/variables
+
+        export ENV=$${_ENV[$BRANCH_NAME]}
+        echo export ENV=$$ENV >> /workspace/variables
+
+        case $$BRANCH in
+          "internal-prod")
+            export VER=$(cat VERSION).$${_TAG[$BRANCH_NAME]}
+            ;;
+          "customer-prod")
+            export VER=$(cat VERSION).$${_TAG[$BRANCH_NAME]}
+            ;;
+          *)
+            export VER=$(cat VERSION).$${_TAG[$BRANCH_NAME]}-$(date +"%y%m%d%H%M%S%3N")
+            ;;
+        esac
+
+        echo export VER=$$VER >> /workspace/variables
+
+        echo export IMAGE=$REPO_NAME >> /workspace/variables
+
+        export SECTION=$REPO_NAME
+        echo export SECTION="${SECTION//-/}" >> /workspace/variables
+        echo "*** VARIABLES ***"
+        cat /workspace/variables
+        echo $COMMIT_SHA
+
+  - name: gcr.io/cloud-builders/npm
+    id: npm-artifactregistry-login
+    args: ['run', 'artifactregistry-login']
+
+  - name: 'eu.gcr.io/b2w-master/b2w-node:dev'
+    id: build
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        source /workspace/variables
+
+        export NODE_OPTIONS=--max_old_space_size=4096
+        echo "*** NODE VERSION ***"
+        node -v
+        echo "*** NPM INSTALL ***"
+        npm ci
+
+        case $BRANCH_NAME in
+          "internal-dev")
+            export ENV_TAG="alpha"
+            ;;
+          "internal-test")
+            export ENV_TAG="beta"
+            ;;
+          "preview-hotfix")
+            export ENV_TAG="prepatch"
+            ;;
+          "hotfix")
+            export ENV_TAG="patch"
+            ;;
+          "internal-prod")
+            export ENV_TAG="preminor"
+            ;;
+          "customer-prod")
+            export ENV_TAG="minor"
+            ;;
+          *)
+            echo "*** Skip this branch $BRANCH_NAME ***"
+            exit 1
+            ;;
+        esac
+
+        echo "*** Run npm install with b2w-design-system $$ENV_TAG version ***"
+        npm install @bit2win/b2w-design-system@$$ENV_TAG
+        npm install @bit2win/b2w-design-system-react@$$ENV_TAG
+
+        echo "*** Run npm install with b2w-core-lib $$ENV_TAG version ***"
+        npm install @bit2win/b2w-core-lib@$$ENV_TAG
+
+        echo "*** NPM BUILD - START ***"
+        npm run build:spa:$$NPM_BUILD_TAG
+        echo "*** NPM BUILD - END ***"
+
+  - name: gcr.io/cloud-builders/gcloud
+    id: copy-to-cdn
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        source /workspace/variables
+        echo "*** copy JS/CSS to CDN ***"
+        gsutil cp -r target_spa/source.js* gs://$$BUCKET/static/app/$$IMAGE/
+        gsutil cp -r target_spa/styles.css* gs://$$BUCKET/static/app/$$IMAGE/
+        gsutil cp -r target_spa/source.js* gs://$$BUCKET/static/app/$$IMAGE/$COMMIT_SHA/
+        gsutil cp -r target_spa/styles.css* gs://$$BUCKET/static/app/$$IMAGE/$COMMIT_SHA/
+
+  - name: gcr.io/cloud-builders/gcloud
+    id: copy-to-customer-test
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        source /workspace/variables
+        SKIP=true
+        if [[ "$$BRANCH" == "customer-prod" || "$$BRANCH" = "internal-prod" ]]
+        then
+          SKIP=false
+        fi
+
+        if [ "$$SKIP" = true ]
+        then
+          echo "xoxo SKIPPING CUSTOMER TESTS"
+          exit 0
+        fi
+        export BUCKET=b2w-cdn-customer-test
+        gsutil cp -r target_spa/source.js* gs://$$BUCKET/static/app/$$IMAGE/
+        gsutil cp -r target_spa/styles.css* gs://$$BUCKET/static/app/$$IMAGE/
+        gsutil cp -r target_spa/source.js* gs://$$BUCKET/static/app/$$IMAGE/$COMMIT_SHA/
+        gsutil cp -r target_spa/styles.css* gs://$$BUCKET/static/app/$$IMAGE/$COMMIT_SHA/
+
+  - name: gcr.io/cloud-builders/gcloud
+    id: copy-to-customer-dev
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        source /workspace/variables
+        SKIP=true
+        if [[ "$$BRANCH" == "customer-prod" || "$$BRANCH" = "internal-prod" ]]
+        then
+          SKIP=false
+        fi
+
+        if [ "$$SKIP" = true ]
+        then
+          echo "xoxo SKIPPING CUSTOMER TESTS"
+          exit 0
+        fi
+        export BUCKET=b2w-cdn-customer-dev
+        gsutil cp -r target_spa/source.js* gs://$$BUCKET/static/app/$$IMAGE/
+        gsutil cp -r target_spa/styles.css* gs://$$BUCKET/static/app/$$IMAGE/
+        gsutil cp -r target_spa/source.js* gs://$$BUCKET/static/app/$$IMAGE/$COMMIT_SHA/
+        gsutil cp -r target_spa/styles.css* gs://$$BUCKET/static/app/$$IMAGE/$COMMIT_SHA/
+
+  - name: gcr.io/cloud-builders/gcloud
+    id: pub-sub-publish
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        source /workspace/variables
+
+        export MODULE=/static/app/$$IMAGE/$COMMIT_SHA/source.js
+        export STYLE=/static/app/$$IMAGE/$COMMIT_SHA/styles.css
+
+        gcloud pubsub topics publish projects/$PROJECT_ID/topics/$$TOPIC \
+        --message="$$IMAGE" --attribute="BUCKET=$$BUCKET,BRANCH=$$BRANCH,TAG=$$TAG,VER=$$VER,IMAGE=$$IMAGE,SECTION=$$SECTION,ENV=$$ENV,SHA=$COMMIT_SHA,ALIAS=$$ALIAS,MODULE=$$MODULE,STYLE=$$STYLE"
