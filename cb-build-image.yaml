@@ -9,20 +9,20 @@ steps:
       - |
         declare -A ALIASES
 
-        ALIASES["b2w-cpq-catalog-fe"]="@bit2win/catalog"
-        ALIASES["b2w-cpq-family-manager-fe"]="@bit2win/family-manager"
-        ALIASES["b2w-cpq-price-manager-fe"]="@bit2win/price-manager"
-        ALIASES["b2w-cpq-product-manager-fe"]="@bit2win/product-manager"
-        ALIASES["b2w-cpq-rulecomposer-fe"]="@bit2win/rulecomposer"
-        ALIASES["b2w-cpq-connector-fe"]="@bit2win/connector"
-        ALIASES["b2w-cpq-om-administration-fe"]="@bit2win/order-management"
-        ALIASES["b2w-cpq-om-businessprocess-fe"]="@bit2win/business-process"
-        ALIASES["b2w-cpq-translation-manager-fe"]="@bit2win/translation-manager"
-        ALIASES["b2w-cpq-bundle-manager-fe"]="@bit2win/b2w-cpq-bundle-manager"
-        ALIASES["b2w-cpq-security-manager"]="@bit2win/security-manager
+        ALIASES["b2w-cpq-datamap-fe"]="@bit2win/datamap"
+        ALIASES["b2w-cpq-import-export-fe"]="@bit2win/importexport"
+        ALIASES["b2w-cpq-import-export-model-fe"]="@bit2win/importexport-model"
+        ALIASES["b2w-cpq-portal-fe"]="@bit2win/root"
+        ALIASES["b2w-cpq-portal-header-fe"]="@bit2win/portal-header"
+        ALIASES["b2w-cpq-portal-menu-fe"]="@bit2win/portal-menu"
+        ALIASES["b2w-cpq-profile-fe"]="@bit2win/profile"
+        ALIASES["b2w-cpq-publish-fe"]="@bit2win/publish"
+        ALIASES["b2w-cpq-role-fe"]="@bit2win/role"
+        ALIASES["b2w-cpq-tooling-fe"]="@bit2win/object-manager"
+        ALIASES["b2w-cpq-user-management-fe"]="@bit2win/b2w-cpq-user-management"
 
         echo export ALIAS=${ALIASES[$REPO_NAME]} > /workspace/variables
-        declare -A _CDN=([internal-dev]="cdn-int-dev.bit2win.cloud" [internal-test]="cdn-int-test.bit2win.cloud" [internal-prod]="cdn-int-prod.bit2win.cloud" [preview-hotfix]="cdn-preview-hotfix.bit2win.cloud" [hotfix]="cdn-hotfix.bit2win.cloud" [costomer-prod]="cdn.bit2win.cloud")
+        declare -A _CDN=([internal-dev]="cdn-int-dev.bit2win.cloud" [internal-test]="cdn-int-test.bit2win.cloud" [internal-prod]="cdn-int-prod.bit2win.cloud" [preview-hotfix]="cdn-preview-hotfix.bit2win.cloud" [hotfix]="cdn-hotfix.bit2win.cloud" [customer-prod]="cdn.bit2win.cloud")
         export CDN="https://$${_CDN[$BRANCH_NAME]}"
 
         curl $$CDN/VERSION -o VERSION
