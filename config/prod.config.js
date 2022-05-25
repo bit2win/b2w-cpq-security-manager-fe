@@ -18,7 +18,7 @@ module.exports = {
             REACT_APP_FAMILY_MANAGER_API_BACK_END: JSON.stringify('/api/family-manager'),
             REACT_APP_ROLE_API_BACK_END: JSON.stringify('/api/role'),
             REACT_APP_I18N_API_BACK_END: JSON.stringify('/api/i18n'),
-            PUBLIC_URL: JSON.stringify('/security-manager'),
+            PUBLIC_URL: JSON.stringify('/api/security-manager'),
         },
     },
 };

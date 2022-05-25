@@ -11,3 +11,8 @@ export enum OnSaveAction {
     EDIT = 'EDIT',
     CLOSE = 'CLOSE',
 }
+
+export enum PageSecurity {
+    DASHBOARD = 'dashboard',
+    ADMINISTRATION = 'administration'
+}

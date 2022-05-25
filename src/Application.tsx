@@ -5,6 +5,7 @@ import './assets/vendor/b2w-bootstrap.scss';
 
 //Page components
 import Dashboard from './page/Dashboard/Dashboard';
+import SecurityManager from "./page/SecurityManager/SecurityManager";
 
 //Language utils
 import Language from './lib/Language';
@@ -48,8 +49,8 @@ class Application extends Component<Props, State> {
                     <B2wStyles></B2wStyles>
                     <Router>
                         <Switch>
-                            <Route exact path={URIPath.DASHBOARD} component={Dashboard} />
-                            <Route exact path={"/security-manager"} component={Dashboard} />
+                            <Route exact path={URIPath.DASHBOARD} component={SecurityManager} />
+                            <Route exact path={"/security-manager"} component={SecurityManager} />
                         </Switch>
                     </Router>
                 </div>

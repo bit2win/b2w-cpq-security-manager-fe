@@ -1,9 +1,7 @@
 import URLUtils from '../lib/utils/URLUtils';
 
 export enum typeBackend {
-    CATALOG = 'catalog',
-    FAMILY = 'family',
-    PROFILE = 'profile',
+    SECURITY_MANAGER = 'security-manager',
 }
 
 class Api {

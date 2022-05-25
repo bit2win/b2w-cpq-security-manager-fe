@@ -50,7 +50,6 @@ class Dashboard extends Page<Props, State> {
     render() {
         return (
             <div className="container-fluid">
-                ciaoooo
                 <div className="row justify-align-center">
                     <B2wSnackbar
                         close={this.state.snackbar['close']}
