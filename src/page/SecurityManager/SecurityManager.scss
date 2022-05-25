@@ -1,0 +1,59 @@
+@import '../../assets/sass/mixin.scss';
+.B2wCpqSecurityManagerRoot {
+  .b2w-security-view-title {
+    font-weight: $font-normal-weight-normal;
+    text-align: left;
+    font-variant: normal;
+    font-style: normal;
+    line-height: 26px;
+    font-size: $font-size-h1;
+    font-family: $font-family-name;
+    letter-spacing: 0.61px;
+    color: #3d414b;
+    text-transform: uppercase;
+    opacity: 1;
+    margin-bottom: 25px;
+    align-self: stretch;
+  }
+  .b2w-security-view {
+    background: #ffffff 0 0 no-repeat padding-box;
+    box-shadow: 0 0 19px #ecf0fa;
+    border-radius: 26px;
+    opacity: 1;
+    padding: 24px;
+    align-self: stretch;
+
+    /* font standard definition */
+    font-style: normal;
+    font-variant: normal;
+    font-family: $font-family-name;
+    font-weight: $font-normal-weight-medium;
+    color: #3d414b;
+
+    &-buttons {
+      display: flex;
+      justify-content: flex-end;
+    }
+  }
+  .b2w-input-row{
+    padding: 25px;
+  }
+
+  .b2w-input-container {
+    width: 45%;
+    padding-left: 30px;
+
+    .b2w-input {
+      width: 60%;
+    }
+  }
+
+  .b2w-check-container {
+    width: 45%;
+    padding-left: 30px;
+
+    .b2w-input {
+      width: 60%;
+    }
+  }
+}
