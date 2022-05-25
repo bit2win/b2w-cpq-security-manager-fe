@@ -192,7 +192,7 @@ export default class SecurityManager extends Page<Props, State> {
                     onB2wSave={() => (this.exitPage())}
                     onB2wCancel={() => (this.setState({ showModal: false }))}
                     onB2wClose={() => (this.setState({ showModal: false }))}
-                    customStyle={'.B2wModal .modal .modalHeader .b2w-modal-status-icon {align-self:start;}'}
+                    customStyle={'.B2wModal .modal .modalHeader .b2w-modal-status-icon {align-self:start !important;}'}
                 />
                 <B2wSnackbar
                     text={this.state.messageSnackbar.message}
