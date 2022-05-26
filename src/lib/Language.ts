@@ -10,7 +10,7 @@ class Language {
     public static loadLocales(): Promise<boolean> {
         return new Promise((resolve, reject) => {
             let api = new TranslationsApi();
-            api.getLanguagesByApplications('generic,security-manager')
+            api.getLanguagesByApplications('generic,security')
                 .then((res: any) => {
                     let lang = res['language'];
                     let locales = {};
